@@ -151,7 +151,7 @@ void update_dmonitoring(UIState *s, const cereal::DriverStateV2::Reader &drivers
 }
 
 static void update_sockets(UIState *s) {
-  s->sm->update(0);
+  s->sm->update(500);
 }
 
 static void update_state(UIState *s) {
@@ -241,11 +241,13 @@ void UIState::updateStatus() {
 }
 
 UIState::UIState(QObject *parent) : QObject(parent) {
-  sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
+  std::vector<const char*> socks = {
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState", "roadCameraState",
     "pandaStates", "carParams", "driverMonitoringState", "carState", "liveLocationKalman", "driverStateV2",
     "wideRoadCameraState", "managerState", "navInstruction", "navRoute", "uiPlan",
-  });
+  };
+  std::vector<const char*> poll = {"modelV2"};
+  sm = std::make_unique<SubMaster>(socks, poll);
 
   Params params;
   prime_type = std::atoi(params.get("PrimeType").c_str());
@@ -255,6 +257,7 @@ UIState::UIState(QObject *parent) : QObject(parent) {
   timer = new QTimer(this);
   QObject::connect(timer, &QTimer::timeout, this, &UIState::update);
   timer->start(1000 / UI_FREQ);
+  //timer->start(0);
 }
 
 void UIState::update() {
